@@ -30,12 +30,14 @@ const ItemDetail: NextPage = () => {
     const { user, isLoading } = useUser();
     const router = useRouter();
 
-    const { data } = useSWR<IProductDetailResponse>(
+    const { data, mutate } = useSWR<IProductDetailResponse>(
         router.query.id ? `/api/products/${router.query.id}` : null
     );
     const [toggleFav] = useMutation(`/api/products/${router.query.id}/fav`);
     const onFavClick = () => {
         toggleFav({});
+        if (!data) return;
+        mutate({ ...data, isLiked: !data.isLiked }, false);
     };
 
     return (

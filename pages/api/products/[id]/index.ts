@@ -22,6 +22,14 @@ async function handler(
                     avatar: true,
                 },
             },
+            // favorites: {
+            //     where: {
+            //         userId: req.session.user?.id,
+            //     },
+            //     select: {
+            //         id: true,
+            //     },
+            // },
         },
     });
     const terms = product?.name
