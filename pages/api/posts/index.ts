@@ -7,7 +7,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const {
         body: { question, latitude, longitude },
         session: { user },
+        query,
     } = req;
+    console.log(query);
     if (req.method === "POST") {
         const post = await client.post.create({
             data: {
@@ -23,6 +25,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         });
         res.json({ ok: true, post });
     } else if (req.method === "GET") {
+        const {
+            query: { latitude, longitude },
+        } = req;
         const posts = await client.post.findMany({
             include: {
                 user: {
