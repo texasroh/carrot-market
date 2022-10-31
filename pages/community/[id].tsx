@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import useMutation from "@libs/client/useMutation";
 import { cls } from "@libs/client/utils";
+import { useEffect } from "react";
 
 interface AnswerWithUser extends Answer {
     user: User;
@@ -28,15 +29,26 @@ interface IPostDetailResponse {
     isWondering: boolean;
 }
 
+interface IAnswerForm {
+    answer: string;
+}
+
+interface IAnswerResponse {
+    ok: boolean;
+    answer: Answer;
+}
+
 const CommunityPostDetail: NextPage = () => {
     const router = useRouter();
     const { data, mutate } = useSWR<IPostDetailResponse>(
         router.query.id ? `/api/posts/${router.query.id}` : null
     );
-    const [wonder] = useMutation(`/api/posts/${router.query.id}/wonder`);
+    const [wonder, { loading }] = useMutation(
+        `/api/posts/${router.query.id}/wonder`
+    );
     const onClickWondering = () => {
+        if (!data || loading) return;
         wonder({});
-        if (!data) return;
         mutate(
             {
                 ...data,
@@ -54,6 +66,28 @@ const CommunityPostDetail: NextPage = () => {
             false
         );
     };
+
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        reset,
+    } = useForm<IAnswerForm>();
+
+    const [sendAnswer, { loading: answerLoading, data: answerData }] =
+        useMutation<IAnswerResponse>(`/api/posts/${router.query.id}/answers`);
+
+    const onValid = (data: IAnswerForm) => {
+        if (answerLoading) return;
+        sendAnswer(data);
+    };
+
+    useEffect(() => {
+        if (answerData && answerData.ok) {
+            reset();
+            mutate();
+        }
+    }, [answerData, reset, mutate]);
 
     return (
         <Layout canGoBack>
@@ -136,7 +170,7 @@ const CommunityPostDetail: NextPage = () => {
                                     {answer.user.name}
                                 </span>
                                 <span className="block text-xs text-gray-500">
-                                    {answer.updatedAt}
+                                    {answer.updatedAt.toLocaleString()}
                                 </span>
                                 <p className="mt-2 text-gray-700">
                                     {answer.answer}
@@ -145,16 +179,28 @@ const CommunityPostDetail: NextPage = () => {
                         </div>
                     ))}
                 </div>
-                <div className="px-4">
+                <form className="px-4" onSubmit={handleSubmit(onValid)}>
+                    {errors.answer ? (
+                        <span className="text-sm font-medium text-red-600">
+                            {errors.answer?.message}
+                        </span>
+                    ) : null}
                     <TextArea
+                        register={register("answer", {
+                            required: true,
+                            minLength: {
+                                value: 5,
+                                message: "Minimum answer length is 5",
+                            },
+                        })}
                         name="description"
                         placeholder="Answer this question!"
                         required
                     />
                     <button className="mt-2 w-full rounded-md border border-transparent bg-orange-500 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ">
-                        Reply
+                        {answerLoading ? "Loading..." : "Reply"}
                     </button>
-                </div>
+                </form>
             </div>
         </Layout>
     );
