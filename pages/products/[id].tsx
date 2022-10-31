@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
 import Button from "@components/button";
 import Layout from "@components/layout";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { useRouter } from "next/router";
 import { Product, User } from "@prisma/client";
 import Link from "next/link";
@@ -29,15 +29,24 @@ interface IProductDetailResponse {
 const ItemDetail: NextPage = () => {
     const { user, isLoading } = useUser();
     const router = useRouter();
-
-    const { data, mutate } = useSWR<IProductDetailResponse>(
+    const { mutate: unboundMutate } = useSWRConfig();
+    const { data, mutate: boundMutate } = useSWR<IProductDetailResponse>(
         router.query.id ? `/api/products/${router.query.id}` : null
     );
     const [toggleFav] = useMutation(`/api/products/${router.query.id}/fav`);
     const onFavClick = () => {
         toggleFav({});
         if (!data) return;
-        mutate({ ...data, isLiked: !data.isLiked }, false);
+        boundMutate({ ...data, isLiked: !data.isLiked }, false);
+        // boundMutate(
+        //     (prev) => prev && { ...prev, isLiked: !prev.isLiked },
+        //     false
+        // );
+        // unboundMutate(
+        //     "/api/users/me",
+        //     (prev: any) => ({ ok: !prev.ok }),
+        //     false
+        // );
     };
 
     return (
