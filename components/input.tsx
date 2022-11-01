@@ -6,7 +6,7 @@ interface InputProps {
     kind?: "text" | "phone" | "price";
     register: UseFormRegisterReturn;
     type: string;
-    required: boolean;
+    required?: boolean;
     [key: string]: any;
 }
 
@@ -16,7 +16,7 @@ export default function Input({
     kind = "text",
     register,
     type,
-    required,
+    required = false,
     ...rest
 }: InputProps) {
     return (
