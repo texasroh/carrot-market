@@ -131,7 +131,7 @@ const ItemDetail: NextPage = () => {
                         Similar items
                     </h2>
                     <div className=" mt-6 grid grid-cols-2 gap-4">
-                        {data?.relatedProducts.map((product) => (
+                        {data?.relatedProducts?.map((product) => (
                             <Link href={`/products/${product.id}`}>
                                 <a>
                                     <div key={product.id}>

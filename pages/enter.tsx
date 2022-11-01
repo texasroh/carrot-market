@@ -48,10 +48,10 @@ const Enter: NextPage = () => {
     };
     const router = useRouter();
     useEffect(() => {
-        if (tokenData?.ok) {
+        if (!tokenLoading && tokenData?.ok) {
             router.push("/");
         }
-    }, [tokenData, router]);
+    }, [tokenLoading, tokenData, router]);
     return (
         <div className="mt-16 px-4">
             <h3 className="text-center text-3xl font-bold">Enter to Carrot</h3>

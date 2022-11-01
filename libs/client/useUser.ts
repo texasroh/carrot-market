@@ -9,14 +9,15 @@ interface IUserResponse {
 }
 
 export default function useUser() {
-    const { data, error } = useSWR<IUserResponse>("/api/users/me");
-    const router = useRouter();
+    const { data, error, isValidating, mutate } =
+        useSWR<IUserResponse>("/api/users/me");
 
+    const router = useRouter();
     useEffect(() => {
-        if (data && !data.ok) {
+        if (!isValidating && data && !data.ok) {
             router.replace("/enter");
         }
-    }, [data, router]);
+    }, [data, router, isValidating]);
 
-    return { user: data?.profile, isLoading: !data && !error };
+    return { user: data?.profile, isLoading: isValidating };
 }

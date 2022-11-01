@@ -109,7 +109,7 @@ const Profile: NextPage = () => {
                     </Link>
                 </div>
                 <div className="mt-12 space-y-3">
-                    {reviews?.reviews.map((review) => (
+                    {reviews?.reviews?.map((review) => (
                         <div>
                             <div className="flex items-center space-x-4">
                                 <div className="h-12 w-12 rounded-full bg-slate-500" />
