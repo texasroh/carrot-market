@@ -12,7 +12,7 @@ const Loved: NextPage = () => {
                         id={i}
                         title="iPhone 14"
                         price={99}
-                        comments={1}
+                        // comments={1}
                         hearts={1}
                     />
                 ))}
