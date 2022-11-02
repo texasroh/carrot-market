@@ -1,0 +1,32 @@
+import withHandler, { ResponseType } from "@libs/server/withHandler";
+import { withApiSession } from "@libs/server/withSession";
+import { NextApiRequest, NextApiResponse } from "next";
+
+async function handler(
+    req: NextApiRequest,
+    res: NextApiResponse<ResponseType>
+) {
+    const response = await (
+        await fetch(
+            `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ID}/images/v1/direct_upload`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.CF_TOKEN}`,
+                },
+            }
+        )
+    ).json();
+    console.log("test", response);
+    res.json({
+        ok: true,
+        test: null,
+        id: response.result ? response.result.id : "test-id",
+        uploadURL: response.result
+            ? response.result?.uploadURL
+            : "test-uploadUrl",
+    });
+}
+
+export default withApiSession(withHandler({ methods: ["GET"], handler }));
