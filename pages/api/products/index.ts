@@ -20,7 +20,7 @@ async function handler(
         res.json({ ok: true, products });
     } else if (req.method === "POST") {
         const {
-            body: { name, price, description },
+            body: { name, price, description, photoId },
             session: { user },
         } = req;
 
@@ -29,7 +29,7 @@ async function handler(
                 name,
                 price: +price,
                 description,
-                image: "temp img",
+                image: photoId ? photoId : "some image",
                 user: {
                     connect: {
                         id: user?.id,
