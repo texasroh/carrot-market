@@ -4,35 +4,59 @@ import { NextApiRequest, NextApiResponse } from "next";
 import client from "@libs/server/client";
 
 async function handler(
-    req: NextApiRequest,
-    res: NextApiResponse<ResponseType>
+  req: NextApiRequest,
+  res: NextApiResponse<ResponseType>
 ) {
-    if (req.method === "GET") {
-        const streams = await client.stream.findMany({
-            take: 10,
-        });
-        res.json({ ok: true, streams });
-    } else if (req.method === "POST") {
-        const {
-            body: { name, price, description },
-            session: { user },
-        } = req;
-        const stream = await client.stream.create({
-            data: {
-                user: {
-                    connect: {
-                        id: user?.id,
-                    },
-                },
-                name,
-                price,
-                description,
-            },
-        });
-        res.json({ ok: true, stream });
-    }
+  const {
+    body: { name, price, description },
+    session: { user },
+  } = req;
+  if (req.method === "GET") {
+    const streams = await client.stream.findMany({
+      take: 10,
+    });
+    res.json({ ok: true, streams });
+  } else if (req.method === "POST") {
+    // const {
+    //   result: {
+    //     uid,
+    //     rtmps: { streamKey, url },
+    //   },
+    // } = await (
+    //   await fetch(
+    //     `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ID}/stream/live_inputs`,
+    //     {
+    //       method: "POST",
+    //       headers: {
+    //         Authorization: `Bearer ${process.env.CF_TOKEN}`,
+    //       },
+    //       body: `{"meta": {"name":"${name}"}, "recording": {"mode":"automatic", "timeoutSeconds:10}}`,
+    //     }
+    //   )
+    // ).json();
+
+    const stream = await client.stream.create({
+      data: {
+        user: {
+          connect: {
+            id: user?.id,
+          },
+        },
+        name,
+        price,
+        description,
+        cloudflareId: "id",
+        cloudflareKey: "key",
+        cloudflareUrl: "url",
+        // cloudflareId: uid,
+        // cloudflareKey: streamKey,
+        // cloudflareUrl: url,
+      },
+    });
+    res.json({ ok: true, stream });
+  }
 }
 
 export default withApiSession(
-    withHandler({ methods: ["GET", "POST"], handler })
+  withHandler({ methods: ["GET", "POST"], handler })
 );
