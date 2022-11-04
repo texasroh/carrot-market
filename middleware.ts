@@ -1,7 +1,22 @@
-import { isBot } from "next/dist/server/web/spec-extension/user-agent";
-import { NextFetchEvent, NextRequest } from "next/server";
+import {
+    NextFetchEvent,
+    NextRequest,
+    NextResponse,
+    userAgent,
+} from "next/server";
 
-const middleware = (req: NextRequest, ev: NextFetchEvent) => {
-  console.log(isBot("hello"));
+export const middleware = (req: NextRequest, ev: NextFetchEvent) => {
+    if (userAgent(req).isBot) {
+        // 새로운 error 화면을 만들고 그쪽으로 rewrite 시켜줄것
+    }
+
+    if (!req.cookies.has("carrotsession") && !req.url.includes("/enter")) {
+        req.nextUrl.searchParams.set("from", req.nextUrl.pathname);
+        req.nextUrl.pathname = "/enter";
+        return NextResponse.redirect(req.nextUrl);
+    }
 };
-export { middleware };
+
+export const config = {
+    matcher: ["/((?!api|_next/static|favicon.ico).*)"],
+};
