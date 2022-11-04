@@ -1,3 +1,4 @@
+import { getIronSession } from "iron-session/edge";
 import {
     NextFetchEvent,
     NextRequest,
@@ -5,12 +6,21 @@ import {
     userAgent,
 } from "next/server";
 
-export const middleware = (req: NextRequest, ev: NextFetchEvent) => {
+export const middleware = async (req: NextRequest, ev: NextFetchEvent) => {
     if (userAgent(req).isBot) {
         // 새로운 error 화면을 만들고 그쪽으로 rewrite 시켜줄것
     }
 
-    if (!req.cookies.has("carrotsession") && !req.url.includes("/enter")) {
+    const res = NextResponse.next();
+    const session = await getIronSession(req, res, {
+        cookieName: "carrotsession",
+        password: process.env.IRON_PW!,
+        cookieOptions: {
+            secure: process.env.NODE_ENV! === "production", // if you are using https
+        },
+    });
+
+    if (!session.user && !req.url.includes("/enter")) {
         req.nextUrl.searchParams.set("from", req.nextUrl.pathname);
         req.nextUrl.pathname = "/enter";
         return NextResponse.redirect(req.nextUrl);
