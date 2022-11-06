@@ -22,6 +22,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         },
       },
     });
+
+    await res.revalidate("/community");
+
     res.json({ ok: true, post });
   } else if (req.method === "GET") {
     const {
