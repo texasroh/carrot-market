@@ -1,4 +1,4 @@
-import type { NextPage } from "next";
+import type { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import Button from "@components/button";
 import Layout from "@components/layout";
 import useSWR, { useSWRConfig } from "swr";
@@ -9,6 +9,7 @@ import useUser from "@libs/client/useUser";
 import useMutation from "@libs/client/useMutation";
 import { cls } from "@libs/client/utils";
 import Image from "next/image";
+import client from "@libs/server/client";
 
 interface ProductWithUser extends Product {
   user: User;
@@ -27,7 +28,11 @@ interface IProductDetailResponse {
   isLiked: Boolean;
 }
 
-const ItemDetail: NextPage = () => {
+const ItemDetail: NextPage<IProductDetailResponse> = ({
+  product,
+  relatedProducts,
+  isLiked,
+}) => {
   const { user, isLoading } = useUser();
   const router = useRouter();
   const { mutate: unboundMutate } = useSWRConfig();
@@ -59,7 +64,7 @@ const ItemDetail: NextPage = () => {
           <div className="relative -z-10 aspect-square">
             <Image
               layout="fill"
-              src={`https://imagedelivery.net/asdfqwe/${data?.product.image}/public`}
+              src={`https://imagedelivery.net/asdfqwe/${product.image}/public`}
               className="bg-slate-300 object-contain"
             />
           </div>
@@ -68,14 +73,14 @@ const ItemDetail: NextPage = () => {
               width={48}
               height={48}
               quality={20}
-              src={`https://imagedelivery.net/asdfqwe/${data?.product.user.avatar}/avatar`}
+              src={`https://imagedelivery.net/asdfqwe/${product.user.avatar}/avatar`}
               className="h-12 w-12 rounded-full bg-slate-300"
             />
             <div>
               <p className="text-sm font-medium text-gray-700">
-                {data?.product?.user.name}
+                {product?.user.name}
               </p>
-              <Link href={`/users/profiles/${data?.product?.userId}`}>
+              <Link href={`/users/profiles/${product?.userId}`}>
                 <a className="text-xs font-medium text-gray-500">
                   View profile &rarr;
                 </a>
@@ -84,24 +89,24 @@ const ItemDetail: NextPage = () => {
           </div>
           <div className="mt-5">
             <h1 className="text-3xl font-bold text-gray-900">
-              {data?.product?.name}
+              {product?.name}
             </h1>
             <span className="mt-3 block text-2xl text-gray-900">
-              ${data?.product?.price}
+              ${product?.price}
             </span>
-            <p className=" my-6 text-gray-700">{data?.product?.description}</p>
+            <p className=" my-6 text-gray-700">{product?.description}</p>
             <div className="flex items-center justify-between space-x-2">
               <Button large text="Talk to seller" />
               <button
                 onClick={onFavClick}
                 className={cls(
                   "flex items-center justify-center rounded-md p-3 ",
-                  data?.isLiked
+                  isLiked
                     ? "text-red-500 hover:text-red-600"
                     : "text-gray-400 hover:bg-gray-100 hover:text-gray-500"
                 )}
               >
-                {data?.isLiked ? (
+                {isLiked ? (
                   <svg
                     className="h-6 w-6"
                     fill="currentColor"
@@ -138,7 +143,7 @@ const ItemDetail: NextPage = () => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Similar items</h2>
           <div className=" mt-6 grid grid-cols-2 gap-4">
-            {data?.relatedProducts?.map((product) => (
+            {relatedProducts?.map((product) => (
               <Link href={`/products/${product.id}`} key={product.id}>
                 <a>
                   <div>
@@ -159,3 +164,71 @@ const ItemDetail: NextPage = () => {
 };
 
 export default ItemDetail;
+
+export const getStaticProps: GetStaticProps = async (ctx) => {
+  if (!ctx.params?.id) {
+    return {
+      props: {},
+    };
+  }
+  const product = await client.product.findUnique({
+    where: {
+      id: +ctx.params.id.toString(),
+    },
+    include: {
+      user: {
+        select: {
+          name: true,
+          avatar: true,
+        },
+      },
+      // favorites: {
+      //     where: {
+      //         userId: req.session.user?.id,
+      //     },
+      //     select: {
+      //         id: true,
+      //     },
+      // },
+    },
+  });
+  const terms = product?.name
+    .split(" ")
+    .map((word) => ({ name: { contains: word } }));
+
+  const relatedProducts = await client.product.findMany({
+    where: {
+      OR: terms,
+      AND: {
+        id: {
+          not: product?.id,
+        },
+      },
+    },
+    take: 4,
+  });
+  const isLiked = false;
+  // const isLiked = Boolean(
+  //   await client.favorite.findFirst({
+  //     where: {
+  //       productId: product?.id,
+  //       userId: user?.id,
+  //     },
+  //     select: { id: true },
+  //   })
+  // );
+  return {
+    props: {
+      product: JSON.parse(JSON.stringify(product)),
+      relatedProducts: JSON.parse(JSON.stringify(relatedProducts)),
+      isLiked,
+    },
+  };
+};
+
+export const getStaticPaths: GetStaticPaths = () => {
+  return {
+    paths: [],
+    fallback: "blocking",
+  };
+};
